@@ -64,6 +64,7 @@ Description= Load smcinvoke dlkm service
 SourcePath=/etc/initscripts/start_smcinvoke_le
 
 [Service]
+Type=oneshot
 Restart=on-failure
 RemainAfterExit=yes
 # This service file has no binary and it is to execute the list of commands in <script>.

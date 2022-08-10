@@ -32,11 +32,11 @@ do_compile() {
 
     cd ${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform  && \
 
-    BUILD_CONFIG=msm-kernel/build.config.msm.${VM_TARGET}.tuivm \
+    BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=../../vendor/qcom/opensource/securemsm-kernel \
     ROOTDIR=${WORKSPACE}/ \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
-    OUT_DIR=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/out/*_tuivm-${KERNEL_VARIANT}defconfig/ \
+    OUT_DIR=${KERNEL_OUT_PATH}/ \
     ./build/build_module.sh
 }
 
