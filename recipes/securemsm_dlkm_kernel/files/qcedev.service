@@ -10,6 +10,7 @@ RemainAfterExit=yes
 # This service file has no binary and it is to execute the list of commands in <script>.
 # Use Script file only when there is NO binary or commands to be executed/ modules to be installed cases.
 
+ExecStartPre= /sbin/insmod /usr/lib/modules/qce50.ko
 ExecStart=/sbin/insmod /usr/lib/modules/qcedev-mod.ko
 ExecStop=/sbin/rmmod /usr/lib/modules/qcedev-mod.ko
 
