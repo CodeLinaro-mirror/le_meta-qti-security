@@ -1,0 +1,1 @@
+QTISECURITY:=securemsm_dlkm_kernel
