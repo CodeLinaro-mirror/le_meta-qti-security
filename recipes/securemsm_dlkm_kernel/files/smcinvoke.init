@@ -1,0 +1,18 @@
+#Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+#SPDX-License-Identifier: BSD-3-Clause-Clear
+
+!#/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=6
+STOP=93
+
+start_service() {
+        procd_open_instance
+        procd_set_param command /sbin/insmod /lib/modules/smcinvoke.ko
+        procd_close_instance
+}
+stop_service() {
+        procd_set_param /sbin/rmmod /lib/modules/smcinvoke.ko
+}
+
