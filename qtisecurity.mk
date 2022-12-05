@@ -1,1 +1,1 @@
-QTISECURITY:=securemsm_dlkm_kernel
+QTISECURITY:=kmod-securemsm-dlkm-kernel

@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-PKG_NAME:=securemsm_dlkm_kernel
+PKG_NAME:=securemsm-dlkm-kernel
 PKG_VERSION:=1.0
 LOCAL_SRC := $(TOPDIR)/src/vendor/qcom/opensource/securemsm-kernel
 SIGN_KEY:= \
