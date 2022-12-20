@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc
+
+#Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+#SPDX-License-Identifier: BSD-3-Clause-Clear
+
+START=04
+STOP=95
+
+USE_PROCD=1
+
+start_service() {
+	procd_open_instance
+	echo "Starting qce50 service"
+	procd_set_param command /sbin/insmod /lib/modules/qce50_dlkm.ko
+	procd_close_instance
+}
+
+stop_service() {
+	echo "Stopping qce50 service"
+	procd_set_param rmmod qce50_dlkm
+	# commands to kill application
+}
+
