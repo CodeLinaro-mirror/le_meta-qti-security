@@ -102,8 +102,10 @@ do_install() {
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko -D ${D}${libdir}/modules/tz_log.ko
         install -m 0644 ${WORKDIR}/tz_log.service -D ${D}${systemd_unitdir}/system/tz_log.service
     fi
+
     cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/linux/ ${D}/usr/include/linux/
     cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/linux/ ${D}/usr/include/
+    cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smmu-proxy/uapi/linux ${D}/usr/include/
     ln -sf ${systemd_unitdir}/system/smcinvoke.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-csm', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/qcedev.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qcedev.service
