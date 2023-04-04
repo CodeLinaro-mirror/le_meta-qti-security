@@ -1,6 +1,6 @@
 DESCRIPTION = "The Go tool for managing Linux filesystem encryption"
 
-SRC_URI = "git://source.codeaurora.org/quic/le/platform/external/google/fscrypt;branch=github-google/master;tag=v0.2.9;protocol=git"
+SRC_URI = "${CLO_LE_GIT}/platform/external/google/fscrypt;branch=caf_migration/github-google/master;tag=v0.2.9;protocol=https"
 SRC_URI += "file://0001-Add-changes-for-inline-encrypt.patch"
 
 LICENSE = "Apache-2.0"
