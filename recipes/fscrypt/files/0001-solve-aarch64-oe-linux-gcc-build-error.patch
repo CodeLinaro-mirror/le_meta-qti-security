@@ -1,0 +1,26 @@
+From 0a9c3b57b774504da192001cf63ba1b576672eff Mon Sep 17 00:00:00 2001
+From: Yuxin Feng <yuxifeng@codeaurora.org>
+Date: Fri, 29 Jan 2021 16:31:12 +0530
+Subject: [PATCH] solve aarch64-oe-linux-gcc build error
+
+Signed-off-by: Yuxin Feng <yuxifeng@codeaurora.org>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index e21b512..e81beb2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -95,7 +95,7 @@ $(BIN)/$(NAME): $(GO_FILES) $(C_FILES)
+	go build $(GO_FLAGS) -o $@ ./cmd/$(NAME)
+
+ $(PAM_MODULE): $(GO_FILES) $(C_FILES)
+-	go build -buildmode=c-shared $(GO_FLAGS) -o $@ ./$(PAM_NAME)
++	go build $(GO_FLAGS) -o $@ ./$(PAM_NAME)
+	rm -f $(BIN)/$(PAM_NAME).h
+
+ gen: $(BIN)/protoc $(BIN)/protoc-gen-go $(PROTO_FILES)
+--
+2.7.4
+
