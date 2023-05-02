@@ -4,3 +4,10 @@ LICENSE = "BSD-3-Clause"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
+
+PACKAGES = ' \
+    packagegroup-qti-securemsm \
+'
+RDEPENDS_${PN} += " \
+    ${@bb.utils.contains("MACHINE_FEATURES", "qti-fscrypt", "fscrypt", "", d)} \
+    "
