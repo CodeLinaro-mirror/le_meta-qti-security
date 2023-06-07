@@ -21,6 +21,7 @@ SRC_URI    +=  "file://qcedev.service"
 SRC_URI    +=  "file://qrng.service"
 SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://qseecom.service"
+SRC_URI    +=  "file://hdcp_qseecom.service"
 
 S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
 
@@ -57,6 +58,10 @@ do_install() {
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${WORKDIR}/qseecom.ko
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-qseecom', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/hdcp_qseecom_dlkm.ko -D ${WORKDIR}/hdcp_qseecom.ko
+    fi
+
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko -D ${WORKDIR}/tz_log.ko
     fi
@@ -74,6 +79,11 @@ do_install() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-qseecom', 'true', 'false', d)}; then
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+             --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/hdcp_qseecom_dlkm.ko
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
@@ -131,6 +141,11 @@ do_install() {
         install -m 0644 ${WORKDIR}/qseecom.service -D ${D}${systemd_unitdir}/system/qseecom.service
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-qseecom', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/hdcp_qseecom_dlkm.ko -D ${D}${libdir}/modules/hdcp_qseecom.ko
+        install -m 0644 ${WORKDIR}/hdcp_qseecom.service -D ${D}${systemd_unitdir}/system/hdcp_qseecom.service
+    fi
+
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko -D ${D}${libdir}/modules/tz_log.ko
         install -m 0644 ${WORKDIR}/tz_log.service -D ${D}${systemd_unitdir}/system/tz_log.service
@@ -151,6 +166,10 @@ do_install() {
         ln -sf ${systemd_unitdir}/system/qseecom.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qseecom.service
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-qseecom', 'true', 'false', d)}; then
+        ln -sf ${systemd_unitdir}/system/hdcp_qseecom.service ${D}${systemd_unitdir}/system/multi-user.target.wants/hdcp_qseecom.service
+    fi
+
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/qrng.service ${D}${systemd_unitdir}/system/multi-user.target.wants/tz_log.service
     fi
@@ -167,6 +186,8 @@ FILES:${PN} += "${systemd_unitdir}/system/smcinvoke.service"
 FILES:${PN} += "${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', "${systemd_unitdir}/system/qseecom.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', "${systemd_unitdir}/system/multi-user.target.wants/qseecom.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-qseecom', "${systemd_unitdir}/system/hdcp_qseecom.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-qseecom', "${systemd_unitdir}/system/multi-user.target.wants/hdcp_qseecom.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', "","${systemd_unitdir}/system/qcedev.service", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm',"", "${systemd_unitdir}/system/multi-user.target.wants/qcedev.service", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm',"", "${systemd_unitdir}/system/qrng.service", d)}"
