@@ -1,0 +1,51 @@
+From cf1192ff72bc926166b4f94a6442537bbeaaa8f4 Mon Sep 17 00:00:00 2001
+From: Jiten Patel <jitepate@codeaurora.org>
+Date: Fri, 31 Jul 2020 11:23:05 +0530
+Subject: [PATCH] Add changes for inline encrypt
+
+---
+ cmd/fscrypt/setup.go  | 2 +-
+ metadata/constants.go | 1 +
+ metadata/policy.go    | 1 +
+ 3 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/fscrypt/setup.go b/cmd/fscrypt/setup.go
+index 7b9bebb..34f0c5e 100644
+--- a/cmd/fscrypt/setup.go
++++ b/cmd/fscrypt/setup.go
+@@ -58,7 +58,7 @@ func createGlobalConfig(w io.Writer, path string) error {
+	// hard because from this context (creating /etc/fscrypt.conf) we may
+	// not yet have access to a filesystem that supports encryption.
+	var policyVersion int64
+-	if util.IsKernelVersionAtLeast(5, 4) {
++	if util.IsKernelVersionAtLeast(4, 19) {
+		fmt.Fprintln(w, "Defaulting to policy_version 2 because kernel supports it.")
+		policyVersion = 2
+	} else {
+diff --git a/metadata/constants.go b/metadata/constants.go
+index fa6b8a7..82fd6bc 100644
+--- a/metadata/constants.go
++++ b/metadata/constants.go
+@@ -41,6 +41,7 @@ const (
+	HMACLen = sha256.Size
+	// PolicyKeyLen is the length of all keys passed directly to the Keyring
+	PolicyKeyLen = unix.FSCRYPT_MAX_KEY_SIZE
++	FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64 = 0x08
+ )
+
+ var (
+diff --git a/metadata/policy.go b/metadata/policy.go
+index 76c2e6f..1428065 100644
+--- a/metadata/policy.go
++++ b/metadata/policy.go
+@@ -251,6 +251,7 @@ func setV2Policy(file *os.File, options *EncryptionOptions, descriptorBytes []by
+		log.Panic("wrong descriptor size for v2 policy")
+	}
+	copy(policy.Master_key_identifier[:], descriptorBytes)
++	policy.Flags |= FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64
+
+	return policyIoctl(file, unix.FS_IOC_SET_ENCRYPTION_POLICY, unsafe.Pointer(&policy))
+ }
+--
+2.22.0
+
