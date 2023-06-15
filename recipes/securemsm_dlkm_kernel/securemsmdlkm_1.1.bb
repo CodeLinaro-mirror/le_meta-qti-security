@@ -31,12 +31,13 @@ EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"
 PARALLEL_MAKE = "-j1"
 
 do_configure() {
-    cp -f ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile.am
+    cp -f ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile_kirkstone ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile.am
 }
 
 do_compile() {
 
     cd ${KERNEL_PLATFORM_PATH}
+
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=${EXT_MODULES} \
     ROOTDIR=${WORKSPACE}/ \
