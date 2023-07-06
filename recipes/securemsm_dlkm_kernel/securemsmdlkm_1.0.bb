@@ -11,6 +11,7 @@ DEPENDS = "rsync-native"
 DEPENDS += "bc-native bison-native"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
+do_compile[lockfiles] = "${TMPDIR}/techpack-dtbs-compile.lock"
 
 FILESPATH   =+ "${WORKSPACE}:"
 SRC_URI = "file://vendor/qcom/opensource/securemsm-kernel/"
