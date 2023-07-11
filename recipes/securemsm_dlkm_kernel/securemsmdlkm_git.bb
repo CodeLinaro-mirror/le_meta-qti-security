@@ -28,6 +28,8 @@ EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"
 # Disable parallel make
 PARALLEL_MAKE = "-j1"
 
+do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
+
 do_configure() {
     cp -f ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile.am
 }
