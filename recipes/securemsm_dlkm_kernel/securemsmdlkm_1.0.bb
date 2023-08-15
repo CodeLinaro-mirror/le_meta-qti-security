@@ -11,6 +11,7 @@ DEPENDS = "rsync-native"
 DEPENDS += "bc-native bison-native"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
+do_compile[lockfiles] = "${TMPDIR}/techpack-dtbs-compile.lock"
 
 FILESPATH   =+ "${WORKSPACE}:"
 SRC_URI = "file://vendor/qcom/opensource/securemsm-kernel/"
@@ -22,6 +23,7 @@ SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://qseecom.service"
 
 S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
+GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
 
 EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"
 
@@ -67,25 +69,25 @@ do_install() {
     fi
 
         # strip debug symbols and sign the module
-        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/9.3.0/strip \
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
               --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
 
               if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
-                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/9.3.0/strip \
+                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
                     --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko
               fi
 
               if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
-                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/9.3.0/strip \
+                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
                     --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko
               fi
 
               if ${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm qti-vm-tele', 'false', 'true', d)}; then
-                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/9.3.0/strip \
+                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
                     --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qce50_dlkm.ko
-                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/9.3.0/strip \
+                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
                     --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qcedev-mod_dlkm.ko
-                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/9.3.0/strip \
+                ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
                     --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qrng_dlkm.ko
               fi
 
