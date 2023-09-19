@@ -23,6 +23,7 @@ SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://qseecom.service"
 
 S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
+GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
 
 EXT_MODULES = "${@os.path.relpath("${S}","${KERNEL_PLATFORM_PATH}")}"
 EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"
@@ -69,25 +70,25 @@ do_install() {
     fi
 
     # strip debug symbols and sign the module
-    ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+    ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
          --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
-        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qseecom_dlkm.ko
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
-        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/tz_log_dlkm.ko
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
-        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qce50_dlkm.ko
-        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcedev-mod_dlkm.ko
-        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko
     fi
 
