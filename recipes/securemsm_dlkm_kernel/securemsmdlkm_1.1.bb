@@ -54,7 +54,7 @@ do_install() {
     install -d ${D}/usr/include/
     install -d ${D}/usr/lib/modules/
     install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko -D ${WORKDIR}/smcinvoke.ko
-    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
+    install -m 0555 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qseecom_dlkm.ko -D ${WORKDIR}/qseecom.ko
