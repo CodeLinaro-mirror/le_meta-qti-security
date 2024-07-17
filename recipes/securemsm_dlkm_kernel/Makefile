@@ -3,6 +3,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=securemsm-dlkm-kernel
 PKG_VERSION:=1.0
+PKG_LICENSE:=GPL-2.0-only
 LOCAL_SRC := $(TOPDIR)/src/vendor/qcom/opensource/securemsm-kernel
 include $(INCLUDE_DIR)/package.mk
 
