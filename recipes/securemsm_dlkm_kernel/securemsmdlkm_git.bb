@@ -21,6 +21,7 @@ SRC_URI    +=  "file://qrng.service"
 SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://smmu_proxy.service"
 SRC_URI    +=  "file://qseecom.service"
+SRC_URI    +=  "file://qcrypto.service"
 
 S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
 
@@ -217,6 +218,12 @@ do_install() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/smmu_proxy.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service
     fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qcrypto-msm_dlkm.ko -D ${D}${libdir}/modules/qcrypto-msm.ko
+        install -m 0644 ${WORKDIR}/qcrypto.service -D ${D}${systemd_unitdir}/system/qcrypto.service
+        ln -sf ${systemd_unitdir}/system/qcrypto.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qcrypto.service
+    fi
 }
 
 FILES:${PN} += "${sysconfdir}/*"
@@ -233,4 +240,6 @@ FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${sy
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/tz_log.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/multi-user.target.wants/tz_log.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', "${systemd_unitdir}/system/qcrypto.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', "${systemd_unitdir}/system/multi-user.target.wants/qcrypto.service", "", d)}"
 FILES:${PN} += "${libdir}/modules/*"
