@@ -54,7 +54,7 @@ do_install() {
     install -d ${D}/usr/include/
     install -d ${D}/usr/lib/modules/
     install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko -D ${WORKDIR}/smcinvoke.ko
-    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
+    install -m 0555 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qseecom_dlkm.ko -D ${WORKDIR}/qseecom.ko
@@ -64,7 +64,7 @@ do_install() {
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/tz_log_dlkm.ko -D ${WORKDIR}/tz_log.ko
     fi
 
-    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm  qti-vm-tele', 'false', 'true', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qce50_dlkm.ko -D ${WORKDIR}/qce50.ko
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcedev-mod_dlkm.ko -D ${WORKDIR}/qcedev-mod.ko
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', 'true', 'false', d)}; then
@@ -87,7 +87,7 @@ do_install() {
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/tz_log_dlkm.ko
     fi
 
-    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm qti-vm-tele', 'false', 'true', d)}; then
         ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qce50_dlkm.ko
         ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
@@ -96,6 +96,9 @@ do_install() {
             ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
                  --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcrypto-msm_dlkm.ko
         fi
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
         ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${GCCVER_AVAILABLE}/strip \
              --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko
     fi
@@ -118,7 +121,7 @@ do_install() {
             ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/tz_log_dlkm.ko
         fi
 
-        if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
+        if ${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm qti-vm-tele', 'false', 'true', d)}; then
             LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
             ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha1 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem \
             ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qce50_dlkm.ko
@@ -126,6 +129,7 @@ do_install() {
             LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
             ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha1 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem \
             ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcedev-mod_dlkm.ko
+        fi
 
             if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', 'true', 'false', d)}; then
                 LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
@@ -133,34 +137,39 @@ do_install() {
                 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcrypto-msm_dlkm.ko
             fi
 
+        if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
             LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
             ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha1 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem \
             ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko
         fi
     fi
 
-    install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko -D ${D}${libdir}/modules/smcinvoke.ko
+    install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko -D ${D}${nonarch_libdir}/modules/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qseecom_dlkm.ko -D ${D}${libdir}/modules/qseecom.ko
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qseecom_dlkm.ko -D ${D}${nonarch_libdir}/modules/qseecom.ko
         install -m 0644 ${WORKDIR}/qseecom.service -D ${D}${systemd_unitdir}/system/qseecom.service
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/tz_log_dlkm.ko -D ${D}${libdir}/modules/tz_log.ko
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/tz_log_dlkm.ko -D ${D}${nonarch_libdir}/modules/tz_log.ko
         install -m 0644 ${WORKDIR}/tz_log.service -D ${D}${systemd_unitdir}/system/tz_log.service
     fi
 
-    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qce50_dlkm.ko -D ${D}${libdir}/modules/qce50.ko
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcedev-mod_dlkm.ko -D ${D}${libdir}/modules/qcedev-mod.ko
+    if ${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm  qti-vm-tele', 'false', 'true', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qce50_dlkm.ko -D ${D}${nonarch_libdir}/modules/qce50.ko
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcedev-mod_dlkm.ko -D ${D}${nonarch_libdir}/modules/qcedev-mod.ko
         install -m 0644 ${WORKDIR}/qcedev.service -D ${D}${systemd_unitdir}/system/qcedev.service
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', 'true', 'false', d)}; then
             install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcrypto-msm_dlkm.ko -D ${D}${libdir}/modules/qcrypto-msm.ko
             install -m 0644 ${WORKDIR}/qcrypto.service -D ${D}${systemd_unitdir}/system/qcrypto.service
         fi
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko -D ${D}${libdir}/modules/msm-rng.ko
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko -D ${D}${nonarch_libdir}/modules/msm-rng.ko
         install -m 0644 ${WORKDIR}/qrng.service -D ${D}${systemd_unitdir}/system/qrng.service
     fi
 
@@ -175,11 +184,14 @@ do_install() {
         ln -sf ${systemd_unitdir}/system/qrng.service ${D}${systemd_unitdir}/system/multi-user.target.wants/tz_log.service
     fi
 
-    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm qti-vm-tele', 'false', 'true', d)}; then
         ln -sf ${systemd_unitdir}/system/qcedev.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qcedev.service
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', 'true', 'false', d)}; then
             ln -sf ${systemd_unitdir}/system/qcrypto.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qcrypto.service
         fi
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
         ln -sf ${systemd_unitdir}/system/qrng.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qrng.service
     fi
 }
@@ -194,8 +206,17 @@ FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', "","${systemd
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm',"", "${systemd_unitdir}/system/multi-user.target.wants/qcedev.service", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', "${systemd_unitdir}/system/qcrypto.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', "${systemd_unitdir}/system/multi-user.target.wants/qcrypto.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm qti-vm-tele', "","${systemd_unitdir}/system/qcedev.service", d)}"
+FILES:${PN} += "${@bb.utils.contains_any('MACHINE_FEATURES', 'qti-vm qti-vm-tele',"", "${systemd_unitdir}/system/multi-user.target.wants/qcedev.service", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm',"", "${systemd_unitdir}/system/qrng.service", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', "", "${systemd_unitdir}/system/multi-user.target.wants/qrng.service", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/tz_log.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/multi-user.target.wants/tz_log.service", "", d)}"
-FILES:${PN} += "${libdir}/modules/*"
+FILES:${PN} += "${nonarch_libdir}/modules/*"
+
+RPROVIDES_${PN} += "kernel-module-smcinvoke-${KERNEL_VERSION}"
+RPROVIDES_${PN} += "kernel-module-qseecom-${KERNEL_VERSION}"
+RPROVIDES_${PN} += "kernel-module-tz-log-${KERNEL_VERSION}"
+RPROVIDES_${PN} += "kernel-module-qce50-${KERNEL_VERSION}"
+RPROVIDES_${PN} += "kernel-module-qcedev-mod-${KERNEL_VERSION}"
+RPROVIDES_${PN} += "kernel-module-msm-rng-${KERNEL_VERSION}"
