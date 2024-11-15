@@ -15,16 +15,23 @@ do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
 do_install() {
-    install -d ${D}/usr/include/linux/
-    #cd ${KERNEL_OUT_PATH}/msm-kernel/
+    LNX_INC_DIR=${D}/usr/include/linux/
 
-    for i in $(find ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/uapi/ -name "*.h" -printf "%P\n"); do
-        cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/uapi/${i} ${D}/usr/include/${i}
-    done
+    # include/linux
+    install -d ${LNX_INC_DIR}
+    cp -r ${S}/include/linux/*.h ${LNX_INC_DIR}
 
-    for i in $(find ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/linux/ -name "*.h" -printf "%P\n"); do
-        cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/linux/${i} ${D}/usr/include/linux/${i}
-    done
+    # smmu-proxy/include/uapi/linux
+    install -d ${LNX_INC_DIR}/smmu-proxy/include/uapi/linux
+    cp -r ${S}/smmu-proxy/include/uapi/linux/*.h ${LNX_INC_DIR}/smmu-proxy/include/uapi/linux/
+
+    # smmu-proxy/linux
+    install -d ${LNX_INC_DIR}/smmu-proxy/linux
+    cp -r ${S}/smmu-proxy/linux/*.h ${LNX_INC_DIR}/smmu-proxy/linux/
+
+    # include/uapi/linux/*
+    install -d ${LNX_INC_DIR}/include/uapi/linux
+    cp -r ${S}/include/uapi/linux/*.h ${LNX_INC_DIR}/include/uapi/linux/
 }
 
 PACKAGES = "${PN}"
