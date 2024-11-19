@@ -4,7 +4,7 @@ LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/\
 ${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
 
-inherit linux-kernel-base
+inherit ${@bb.utils.contains_any('MACHINE', 'sa525m sa525m-televm sa525m-emmc', 'module', '', d)} linux-kernel-base
 
 PR = "r0"
 
@@ -51,10 +51,8 @@ do_compile() {
 do_install() {
     install -d ${D}${sysconfdir}/initscripts
     install -d ${D}${systemd_unitdir}/system/multi-user.target.wants/
-    install -d ${D}/usr/include/
-    install -d ${D}/usr/lib/modules/
     install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko -D ${WORKDIR}/smcinvoke.ko
-    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
+    install -m 0555 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qseecom_dlkm.ko -D ${WORKDIR}/qseecom.ko
@@ -162,10 +160,10 @@ do_install() {
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcedev-mod_dlkm.ko -D ${D}${nonarch_libdir}/modules/qcedev-mod.ko
         install -m 0644 ${WORKDIR}/qcedev.service -D ${D}${systemd_unitdir}/system/qcedev.service
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qcrypto', 'true', 'false', d)}; then
-            install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcrypto-msm_dlkm.ko -D ${D}${libdir}/modules/qcrypto-msm.ko
+            install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qcrypto-msm_dlkm.ko -D ${D}${nonarch_libdir}/modules/qcrypto-msm.ko
             install -m 0644 ${WORKDIR}/qcrypto.service -D ${D}${systemd_unitdir}/system/qcrypto.service
         fi
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko -D ${D}${libdir}/modules/msm-rng.ko
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko -D ${D}${nonarch_libdir}/modules/msm-rng.ko
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm', 'false', 'true', d)}; then
@@ -173,7 +171,6 @@ do_install() {
         install -m 0644 ${WORKDIR}/qrng.service -D ${D}${systemd_unitdir}/system/qrng.service
     fi
 
-    cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/linux/ ${D}/usr/include/linux/
     ln -sf ${systemd_unitdir}/system/smcinvoke.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
