@@ -30,10 +30,14 @@ EXT_KP_MODULES = "${@os.path.relpath("${S}","${KERNEL_PLATFORM_PATH}")}"
 # Disable parallel make
 PARALLEL_MAKE = "-j1"
 
+STRIP_VERSION = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', '${KP_STRIP_VERSION}', '9.3.0', d)}"
 SIGN_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/scripts', d)}"
 CERT_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/certs', d)}"
 GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
 STRIP_VERSION = "${@bb.utils.contains_any('BASEMACHINE', 'sa510m', '13.3.0', '${GCCVER_AVAILABLE}', d)}"
+
+LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH_MUSLC}", "${LD_PATH_GLIBC}", d)}"
+
 
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
 
@@ -48,6 +52,9 @@ do_compile() {
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=../../vendor/qcom/opensource/securemsm-kernel \
     ROOTDIR=${WORKSPACE}/ \
+    ENABLE_DDK_BUILD=${DDK_BUILD} \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
+    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
     KERNEL_KIT=${KERNEL_OUT_PATH}/ \
     OUT_DIR=temp_out_dir \
@@ -69,12 +76,9 @@ do_compile:sa510m() {
     ./build/build_module.sh
 }
 
-do_install() {
-    install -d ${D}${sysconfdir}/initscripts
-    install -d ${D}${systemd_unitdir}/system/multi-user.target.wants/
-    install -d ${D}/usr/lib/modules/
+do_strip_and_sign_modules() {
+
     install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko -D ${WORKDIR}/smcinvoke.ko
-    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${WORKDIR}/qseecom.ko
@@ -168,7 +172,37 @@ do_install() {
         fi
     fi
 
-    install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko -D ${D}${libdir}/modules/smcinvoke.ko
+         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-csm', 'true', 'false', d)}; then
+            LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+                ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qce50_dlkm.ko
+            LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+                ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qcedev-mod_dlkm.ko
+            LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+                ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qrng_dlkm.ko
+            LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+                ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko
+         fi
+
+         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', 'true', 'false', d)}; then
+            LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+                ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smmu_proxy_dlkm.ko
+         fi
+
+}
+
+python () {
+    bb.build.addtask('do_strip_and_sign_modules', 'do_install', 'do_compile', d)
+}
+
+do_install() {
+    install -d ${D}${sysconfdir}/initscripts
+    install -d ${D}${systemd_unitdir}/system/multi-user.target.wants/
+    install -d ${D}/usr/include/
+    install -d ${D}/usr/lib/modules/
+    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
+
+    cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko ${D}${libdir}/modules/smcinvoke.ko
+    chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
@@ -191,7 +225,8 @@ do_install() {
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', 'true', 'false', d)}; then
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smmu_proxy_dlkm.ko -D ${D}${libdir}/modules/smmu_proxy.ko
+        cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smmu_proxy_dlkm.ko ${D}${libdir}/modules/smmu_proxy.ko
+        chown 0:0 ${D}${libdir}/modules/smmu_proxy.ko
         install -m 0644 ${WORKDIR}/smmu_proxy.service -D ${D}${systemd_unitdir}/system/smmu_proxy.service
     fi
 
@@ -235,3 +270,5 @@ FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${sy
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/tz_log.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/multi-user.target.wants/tz_log.service", "", d)}"
 FILES:${PN} += "${libdir}/modules/*"
+
+RM_WORK_EXCLUDE += "${PN}"
