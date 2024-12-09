@@ -36,6 +36,9 @@ CERT_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '
 GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
 STRIP_VERSION = "${GCCVER_AVAILABLE}"
 
+SIGN_PATH:mdm9607 = "${@bb.utils.contains('KERNEL_TYPE', 'dist', 'dist', '../msm-kernel/scripts', d)}"
+CERT_PATH:mdm9607 = "${@bb.utils.contains('KERNEL_TYPE', 'dist', 'dist', '../msm-kernel/scripts', d)}"
+
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
 
 do_configure() {
@@ -127,8 +130,6 @@ do_install() {
                 ${STAGING_DIR_NATIVE}/usr/libexec/${TARGET_SYS}/gcc/${TARGET_SYS}/${STRIP_VERSION}/strip \
                     --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smmu_proxy_dlkm.ko
               fi
-       #Since 5.10+ kernel with Techpack enabled SPs, module signing is no longer mandated, skipping.
-       if ${@bb.utils.contains('BASEMACHINE', 'mdm9607', 'false', 'true', d)}; then
         LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
         ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
              ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
