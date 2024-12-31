@@ -59,6 +59,7 @@ do_compile() {
 
 do_compile:mdm9607() {
 
+    variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
     cd ${KERNEL_PLATFORM_PATH}
     ENABLE_DDK_BUILD=${ENABLE_DDK_BUILD} \
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
@@ -66,6 +67,7 @@ do_compile:mdm9607() {
     EXT_MODULES=${EXT_MODULES} \
     ROOTDIR=${WORKSPACE}/ \
     KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
+    VARIANT=${variant}_defconfig \
     OUT_DIR=${KERNEL_OUT_PATH} \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel \
     ./build/build_module.sh
