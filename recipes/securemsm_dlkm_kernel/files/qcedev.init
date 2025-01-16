@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+
+#Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+#SPDX-License-Identifier: BSD-3-Clause-Clear
+
+START=07
+STOP=92
+
+USE_PROCD=1
+
+start_service() {
+	procd_open_instance
+	echo "Starting qcedev service"
+	procd_set_param command /sbin/insmod /lib/modules/qcedev-mod.ko
+	procd_close_instance
+}
+
+stop_service() {
+	echo "Stopping qcedev service"
+	procd_set_param rmmod qcedev_mod_dlkm
+	# commands to kill application
+}
+
