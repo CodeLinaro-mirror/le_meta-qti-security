@@ -170,11 +170,7 @@ do_install() {
         install -m 0644 ${WORKDIR}/smmu_proxy.service -D ${D}${systemd_unitdir}/system/smmu_proxy.service
     fi
 
-    cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/linux/ ${D}/usr/include/linux/
-    cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/uapi/linux/qseecom.h ${D}/usr/include/linux/
-    cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/uapi/linux/qseecom_api.h ${D}/usr/include/linux/
-    cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/linux/ ${D}/usr/include/
-    cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smmu-proxy/include/uapi/linux ${D}/usr/include/
+    rm -rf ${D}/usr/include/*
     ln -sf ${systemd_unitdir}/system/smcinvoke.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then

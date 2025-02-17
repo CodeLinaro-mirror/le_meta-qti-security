@@ -32,6 +32,14 @@ do_install() {
     # include/uapi/linux/*
     install -d ${LNX_INC_DIR}/include/uapi/linux
     cp -r ${S}/include/uapi/linux/*.h ${LNX_INC_DIR}/include/uapi/linux/
+
+    # misc
+    install -d ${LNX_INC_DIR}/misc
+    cp -r ${S}/linux/misc/*.h ${LNX_INC_DIR}/misc/
+
+    # qti-smmu-proxy.h
+    cp -r ${S}/smmu-proxy/include/uapi/linux/*.h ${LNX_INC_DIR}/
+    cp -r ${S}/include/uapi/linux/*.h ${LNX_INC_DIR}/
 }
 
 PACKAGES = "${PN}"
