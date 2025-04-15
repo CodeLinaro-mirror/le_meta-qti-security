@@ -93,8 +93,8 @@ do_install() {
         ${STRIP} --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko
     fi
 
-	#Since 5.10+ kernel with Techpack enabled SPs, module signing is no longer mandated, skipping.
-    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x qcm2290-mtp', 'false', 'true', d)}; then
+    #Since 5.10+ kernel with Techpack enabled SPs, module signing is no longer mandated, skipping.
+    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x qcm2290-mtp qcm4325-mtp', 'false', 'true', d)}; then
         LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
         ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha1 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem \
         ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko
