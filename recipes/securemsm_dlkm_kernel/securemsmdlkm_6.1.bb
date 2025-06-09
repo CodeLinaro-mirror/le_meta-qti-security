@@ -190,8 +190,6 @@ do_install() {
     fi
 }
 
-addtask deploy after do_install before do_package
-
 FILES:${PN} += "${sysconfdir}/*"
 FILES:${PN} += "/etc/initscripts/start_smcinvoke_le"
 FILES:${PN} += "${systemd_unitdir}/system/smcinvoke.service"
