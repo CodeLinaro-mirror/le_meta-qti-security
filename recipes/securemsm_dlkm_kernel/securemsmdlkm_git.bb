@@ -10,8 +10,6 @@ PR = "r0"
 DEPENDS = "rsync-native"
 DEPENDS += "bc-native bison-native"
 
-KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
-
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
 FILESPATH   =+ "${WORKSPACE}:"
@@ -78,7 +76,6 @@ do_install() {
     install -d ${D}/usr/lib/modules/
     install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko -D ${WORKDIR}/smcinvoke.ko
     install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
-    install -d ${D}/usr/lib/modules/${KERNEL_VERSION}
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${WORKDIR}/qseecom.ko
@@ -100,10 +97,8 @@ do_install() {
     fi
 
     # strip debug symbols and sign the module
-    if [ -f "${STAGING_DIR_NATIVE}/usr/libexec/${TARGET_SYS}/gcc/${TARGET_SYS}/${STRIP_VERSION}/strip" ]; then
     ${STAGING_DIR_NATIVE}/usr/libexec/${TARGET_SYS}/gcc/${TARGET_SYS}/${STRIP_VERSION}/strip \
         --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
-    fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         ${STAGING_DIR_NATIVE}/usr/libexec/${TARGET_SYS}/gcc/${TARGET_SYS}/${STRIP_VERSION}/strip \
@@ -131,12 +126,10 @@ do_install() {
     fi
 
     #Disable module signing for securemsm DLKM techpack module for SA510M
-    if ${@bb.utils.contains('BASEMACHINE', 'sa510m', 'false', 'true', d)}; then
-        if [ -f "${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file" ]; then
-	LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
+    if ${@bb.utils.contains_any('BASEMACHINE', 'sa510m sun', 'false', 'true', d)}; then
+        LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
             ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
             ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
-	fi
 
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
             LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
@@ -227,11 +220,6 @@ do_install() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/smmu_proxy.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service
     fi
-
-    install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/hdcp_qseecom_dlkm.ko -D ${D}/usr/lib/modules/${KERNEL_VERSION}/hdcp_qseecom.ko
-    install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko -D ${D}/usr/lib/modules/${KERNEL_VERSION}/smcinvoke.ko
-    install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smmu_proxy_dlkm.ko -D ${D}/usr/lib/modules/${KERNEL_VERSION}/smmu_proxy.ko
-    install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/Module.symvers -D ${D}${base_libdir}/modules/${KERNEL_VERSION}/securemsm-kernel-out/Module.symvers
 }
 
 FILES:${PN} += "${sysconfdir}/*"
