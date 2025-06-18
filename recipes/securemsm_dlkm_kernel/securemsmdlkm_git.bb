@@ -33,7 +33,7 @@ PARALLEL_MAKE = "-j1"
 SIGN_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/scripts', d)}"
 CERT_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/certs', d)}"
 GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
-STRIP_VERSION = "${GCCVER_AVAILABLE}"
+STRIP_VERSION = "${@bb.utils.contains_any('BASEMACHINE', 'sa510m', '13.3.0', '${GCCVER_AVAILABLE}', d)}"
 
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
 
