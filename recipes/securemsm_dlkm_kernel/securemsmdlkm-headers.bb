@@ -17,6 +17,10 @@ do_compile[noexec] = "1"
 do_install() {
     LNX_INC_DIR=${D}/usr/include/linux/
 
+    # include/linux
+    install -d ${LNX_INC_DIR}
+    cp -r ${S}/include/linux/*.h ${LNX_INC_DIR}
+
     # smmu-proxy/include/uapi/linux
     install -d ${LNX_INC_DIR}/smmu-proxy/include/uapi/linux
     cp -r ${S}/smmu-proxy/include/uapi/linux/*.h ${LNX_INC_DIR}/smmu-proxy/include/uapi/linux/
