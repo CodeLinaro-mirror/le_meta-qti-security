@@ -11,7 +11,7 @@ RemainAfterExit=yes
 # Use Script file only when there is NO binary or commands to be executed/ modules to be installed cases.
 
 ExecStart=/sbin/insmod /usr/lib/modules/msm-rng.ko
-ExecStop=/sbin/rmmod /usr/lib/modules/msm-rng.ko
+ExecStop=/sbin/rmmod qrng_dlkm
 
 [Install]
 WantedBy=multi-user.target
