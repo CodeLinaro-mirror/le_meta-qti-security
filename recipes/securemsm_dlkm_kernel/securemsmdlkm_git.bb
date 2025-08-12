@@ -126,7 +126,7 @@ do_install() {
     fi
 
     #Disable module signing for securemsm DLKM techpack module for SA510M
-    if ${@bb.utils.contains('BASEMACHINE', 'sa510m', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('BASEMACHINE', 'sa510m sun', 'false', 'true', d)}; then
         LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
             ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
             ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
