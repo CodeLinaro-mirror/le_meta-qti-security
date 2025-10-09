@@ -8,6 +8,6 @@ inherit packagegroup
 PACKAGES = ' \
     packagegroup-qti-securemsm \
 '
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     ${@bb.utils.contains("MACHINE_FEATURES", "qti-fscrypt", "fscrypt", "", d)} \
     "

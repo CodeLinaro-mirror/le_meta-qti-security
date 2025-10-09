@@ -2,8 +2,8 @@ DESCRIPTION = "The Go tool for managing Linux filesystem encryption"
 
 SRC_URI = "${CLO_LE_GIT}/platform/external/google/fscrypt;branch=caf_migration/github-google/master;tag=v0.2.9;protocol=https"
 SRC_URI += "file://0001-Add-changes-for-inline-encrypt.patch"
-SRC_URI_append += " ${@bb.utils.contains('GCCVERSION', '9.3%', 'file://0001-solve-aarch64-oe-linux-gcc-build-error.patch', '', d)}"
-SRC_URI_append += " ${@bb.utils.contains('GCCVERSION', '9.3%', 'file://fscrypt', '', d)}"
+SRC_URI:append += " ${@bb.utils.contains('GCCVERSION', '9.3%', 'file://0001-solve-aarch64-oe-linux-gcc-build-error.patch', '', d)}"
+SRC_URI:append += " ${@bb.utils.contains('GCCVERSION', '9.3%', 'file://fscrypt', '', d)}"
 
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/${PN}-${PV}/src/${GO_IMPORT}/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
@@ -48,5 +48,5 @@ do_install() {
 	install -m 0755 ${WORKDIR}/${PN}-${PV}/src/${GO_IMPORT}/bin/pam_fscrypt.so ${D}${libdir}/
 }
 
-FILES_${PN} += "${bindir}/fscrypt \
+FILES:${PN} += "${bindir}/fscrypt \
                 ${libdir}/pam_fscrypt.so"
