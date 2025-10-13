@@ -65,7 +65,22 @@ do_compile:sa510m() {
     VARIANT=${variant}_defconfig \
     OUT_DIR=${KERNEL_OUT_PATH} \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
-    TARGET_BOARD_PLATFORM=sa510m \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
+    ./build/build_module.sh
+}
+
+do_compile:sa510m_1g() {
+    variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
+    cd ${KERNEL_PLATFORM_PATH}
+    ENABLE_DDK_BUILD="true" \
+    BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
+    EXT_MODULES=${EXT_KP_MODULES} \
+    ROOTDIR=${WORKSPACE}/ \
+    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
+    VARIANT=${variant}_defconfig \
+    OUT_DIR=${KERNEL_OUT_PATH} \
+    MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     ./build/build_module.sh
 }
 
@@ -125,7 +140,7 @@ do_install() {
     fi
 
     #Disable module signing for securemsm DLKM techpack module for SA510M
-    if ${@bb.utils.contains_any('BASEMACHINE', 'sa510m sun kera', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('BASEMACHINE', 'sa510m sun kera sa510m-1g', 'false', 'true', d)}; then
         LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
             ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
             ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
