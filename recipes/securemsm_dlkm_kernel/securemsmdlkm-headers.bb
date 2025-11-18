@@ -10,7 +10,7 @@ SRC_URI = " \
     file://vendor/qcom/opensource/securemsm-kernel/ \
 "
 
-S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/"
+S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
