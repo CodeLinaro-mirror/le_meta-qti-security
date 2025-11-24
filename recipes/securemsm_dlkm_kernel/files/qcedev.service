@@ -12,8 +12,7 @@ RemainAfterExit=yes
 
 ExecStartPre= /sbin/insmod /usr/lib/modules/qce50.ko
 ExecStart=/sbin/insmod /usr/lib/modules/qcedev-mod.ko
-ExecStop=/sbin/rmmod qcedev_mod_dlkm
-ExecStopPost=/sbin/rmmod qce50_dlkm
+ExecStop=/sbin/rmmod /usr/lib/modules/qcedev-mod.ko
 
 [Install]
 WantedBy=multi-user.target
