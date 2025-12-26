@@ -38,6 +38,7 @@ LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH
 
 
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
+do_compile[network] = "1"
 
 do_configure() {
     cp -f ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile.am
