@@ -73,6 +73,10 @@ do_strip_and_sign_modules() {
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko -D ${WORKDIR}/tz_log.ko
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko -D ${WORKDIR}/tmecom.ko
+    fi
+
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qce50_dlkm.ko -D ${WORKDIR}/qce50.ko
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qcedev-mod_dlkm.ko -D ${WORKDIR}/qcedev-mod.ko
@@ -95,6 +99,11 @@ do_strip_and_sign_modules() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
     ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${STRIP_VERSION}/strip \
         --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${STRIP_VERSION}/strip \
+            --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
@@ -125,6 +134,11 @@ do_strip_and_sign_modules() {
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
             ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko
+        fi
+
+        if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+            ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko
         fi
 
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
@@ -171,6 +185,12 @@ do_install() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko -D ${D}${libdir}/modules/tz_log.ko
         install -m 0644 ${WORKDIR}/tz_log.service -D ${D}${systemd_unitdir}/system/tz_log.service
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko -D ${D}${libdir}/modules/tmecom.ko
+        sed -i '/^ExecStart=/i ExecStartPre=/sbin/insmod /usr/lib/modules/tmecom.ko' ${D}${systemd_unitdir}/system/tz_log.service
+        sed -i 's|^ExecStop=/sbin/rmmod tz_log_dlkm|ExecStop=/sbin/rmmod tz_log_dlkm tmecom-intf_dlkm|' ${D}${systemd_unitdir}/system/tz_log.service
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
