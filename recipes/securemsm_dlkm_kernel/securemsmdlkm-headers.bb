@@ -10,7 +10,7 @@ SRC_URI = " \
     file://vendor/qcom/opensource/securemsm-kernel/ \
 "
 
-S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/"
+S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
@@ -40,6 +40,14 @@ do_install() {
     # include/uapi/linux/*
     install -d ${LNX_INC_DIR}/include/uapi/linux
     cp -r ${S}/include/uapi/linux/*.h ${LNX_INC_DIR}/include/uapi/linux/
+}
+
+do_install:append() {
+    if [ "${MACHINE}" == "sa510m" ]; then
+        rm ${LNX_INC_DIR}/include/uapi/linux/qcota.h
+        rm ${LNX_INC_DIR}/smmu-proxy/include/uapi/linux/qti-smmu-proxy.h
+        rm ${LNX_INC_DIR}/smmu-proxy/linux/qti-smmu-proxy.h
+    fi
 }
 
 PACKAGES = "${PN}"
