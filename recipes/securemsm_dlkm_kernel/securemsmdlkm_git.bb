@@ -36,7 +36,6 @@ GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
 STRIP_VERSION = "${@bb.utils.contains_any('BASEMACHINE', 'sa510m sdmsteppe alor vienna', '13.3.0', '${STRIP_VERSION_MACHINE_FEATURES}', d)}"
 LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH_MUSLC}", "${LD_PATH_GLIBC}", d)}"
 
-
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
 do_compile[network] = "1"
 
@@ -53,7 +52,7 @@ do_compile() {
     ROOTDIR=${WORKSPACE}/ \
     ENABLE_DDK_BUILD=${DDK_BUILD} \
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
-    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
+    VARIANT=${KERNEL_VARIANT} \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
     KERNEL_KIT=${KERNEL_OUT_PATH}/ \
     OUT_DIR=${KERNEL_OUT_PATH}/ \
