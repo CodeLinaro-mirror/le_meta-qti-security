@@ -42,5 +42,13 @@ do_install() {
     cp -r ${S}/include/uapi/linux/*.h ${LNX_INC_DIR}/include/uapi/linux/
 }
 
+do_install:append() {
+    if [ "${MACHINE}" == "sa510m" ]; then
+        rm ${LNX_INC_DIR}/include/uapi/linux/qcota.h
+        rm ${LNX_INC_DIR}/smmu-proxy/include/uapi/linux/qti-smmu-proxy.h
+        rm ${LNX_INC_DIR}/smmu-proxy/linux/qti-smmu-proxy.h
+    fi
+}
+
 PACKAGES = "${PN}"
 FILES:${PN} += "/usr/*"
