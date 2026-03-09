@@ -62,6 +62,9 @@
 [Unit]
 Description= Load smcinvoke dlkm service
 SourcePath=/etc/initscripts/start_smcinvoke_le
+DefaultDependencies=no
+After=psi_daemon.service
+Before=systemd-udevd.service systemd-udevtrigger.service
 
 [Service]
 Type=oneshot
