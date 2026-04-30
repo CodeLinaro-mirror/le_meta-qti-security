@@ -173,7 +173,7 @@ do_install() {
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
     # /etc folder execute file/permission is disallow hence start_smcinvoke_le is move to /usr/sbin
-    if ${@bb.utils.contains('BASEMACHINE', 'vienna alor', 'true', 'false', d)}; then
+    if ${@bb.utils.contains_any('BASEMACHINE', 'vienna alor', 'true', 'false', d)}; then
         install -d ${D}${sbindir}/initscripts
         install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sbindir}/initscripts
         sed -i 's|^ExecStart=/etc|ExecStart=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
