@@ -9,6 +9,7 @@ PR = "r0"
 
 DEPENDS = "rsync-native"
 DEPENDS += "bc-native bison-native"
+KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
@@ -162,8 +163,10 @@ do_install() {
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${D}${libdir}/modules/qseecom.ko
-        install -m 0644 ${WORKDIR}/qseecom.service -D ${D}${systemd_unitdir}/system/qseecom.service
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${D}${libdir}/modules/${KERNEL_VERSION}/qseecom.ko
+        install -d ${D}${sysconfdir}/modules-load.d/
+        echo "qseecom" >> 01-qseecom.conf
+        install -m 0644 01-qseecom.conf ${D}${sysconfdir}/modules-load.d/01-qseecom.conf
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
@@ -192,10 +195,6 @@ do_install() {
     cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smmu-proxy/include/uapi/linux ${D}/usr/include/
     ln -sf ${systemd_unitdir}/system/smcinvoke.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service
 
-    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
-        ln -sf ${systemd_unitdir}/system/qseecom.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qseecom.service
-    fi
-
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/tz_log.service ${D}${systemd_unitdir}/system/multi-user.target.wants/tz_log.service
     fi
@@ -214,8 +213,6 @@ FILES:${PN} += "${sysconfdir}/*"
 FILES:${PN} += "/etc/initscripts/start_smcinvoke_le"
 FILES:${PN} += "${systemd_unitdir}/system/smcinvoke.service"
 FILES:${PN} += "${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service"
-FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', "${systemd_unitdir}/system/qseecom.service", "", d)}"
-FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', "${systemd_unitdir}/system/multi-user.target.wants/qseecom.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/qcedev.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/multi-user.target.wants/qcedev.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/qrng.service", "", d)}"
