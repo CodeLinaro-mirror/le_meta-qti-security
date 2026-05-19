@@ -8,6 +8,7 @@ inherit linux-kernel-base
 PR = "r0"
 
 DEPENDS += "rsync-native bc-native bison-native"
+KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
@@ -36,7 +37,6 @@ GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
 STRIP_VERSION = "${@bb.utils.contains_any('BASEMACHINE', 'sa510m sdmsteppe alor vienna', '13.3.0', '${STRIP_VERSION_MACHINE_FEATURES}', d)}"
 LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH_MUSLC}", "${LD_PATH_GLIBC}", d)}"
 
-
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
 do_compile[network] = "1"
 
@@ -53,7 +53,7 @@ do_compile() {
     ROOTDIR=${WORKSPACE}/ \
     ENABLE_DDK_BUILD=${DDK_BUILD} \
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
-    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
+    VARIANT=${KERNEL_VARIANT} \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
     KERNEL_KIT=${KERNEL_OUT_PATH}/ \
     OUT_DIR=${KERNEL_OUT_PATH}/ \
@@ -70,6 +70,10 @@ do_strip_and_sign_modules() {
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko -D ${WORKDIR}/tz_log.ko
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko -D ${WORKDIR}/tmecom.ko
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
@@ -94,6 +98,11 @@ do_strip_and_sign_modules() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
     ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${STRIP_VERSION}/strip \
         --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${STRIP_VERSION}/strip \
+            --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
@@ -124,6 +133,11 @@ do_strip_and_sign_modules() {
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
             ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko
+        fi
+
+        if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+            ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko
         fi
 
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
@@ -160,14 +174,31 @@ do_install() {
     chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
+    # /etc folder execute file/permission is disallow hence start_smcinvoke_le is move to /usr/sbin
+    if ${@bb.utils.contains('BASEMACHINE', 'vienna', 'true', 'false', d)}; then
+        install -d ${D}${sbindir}/initscripts
+        install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sbindir}/initscripts
+        sed -i 's|^ExecStart=/etc|ExecStart=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+        sed -i 's|^ExecStop=/etc|ExecStop=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+        sed -i 's|^SourcePath=/etc|SourcePath=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+    fi
+
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
-        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${D}${libdir}/modules/qseecom.ko
-        install -m 0644 ${WORKDIR}/qseecom.service -D ${D}${systemd_unitdir}/system/qseecom.service
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${D}${libdir}/modules/${KERNEL_VERSION}/qseecom.ko
+        install -d ${D}${sysconfdir}/modules-load.d/
+        echo "qseecom" >> 01-qseecom.conf
+        install -m 0644 01-qseecom.conf ${D}${sysconfdir}/modules-load.d/01-qseecom.conf
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tz_log_dlkm.ko -D ${D}${libdir}/modules/tz_log.ko
         install -m 0644 ${WORKDIR}/tz_log.service -D ${D}${systemd_unitdir}/system/tz_log.service
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tmecom', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/tmecom-intf_dlkm.ko -D ${D}${libdir}/modules/tmecom.ko
+        sed -i '/^ExecStart=/i ExecStartPre=/sbin/insmod /usr/lib/modules/tmecom.ko' ${D}${systemd_unitdir}/system/tz_log.service
+        sed -i 's|^ExecStop=/sbin/rmmod tz_log_dlkm|ExecStop=/sbin/rmmod tz_log_dlkm tmecom-intf_dlkm|' ${D}${systemd_unitdir}/system/tz_log.service
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', 'true', 'false', d)}; then
@@ -191,10 +222,6 @@ do_install() {
     cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smmu-proxy/include/uapi/linux ${D}/usr/include/
     ln -sf ${systemd_unitdir}/system/smcinvoke.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service
 
-    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
-        ln -sf ${systemd_unitdir}/system/qseecom.service ${D}${systemd_unitdir}/system/multi-user.target.wants/qseecom.service
-    fi
-
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/tz_log.service ${D}${systemd_unitdir}/system/multi-user.target.wants/tz_log.service
     fi
@@ -213,8 +240,6 @@ FILES:${PN} += "${sysconfdir}/*"
 FILES:${PN} += "/etc/initscripts/start_smcinvoke_le"
 FILES:${PN} += "${systemd_unitdir}/system/smcinvoke.service"
 FILES:${PN} += "${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service"
-FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', "${systemd_unitdir}/system/qseecom.service", "", d)}"
-FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', "${systemd_unitdir}/system/multi-user.target.wants/qseecom.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/qcedev.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/multi-user.target.wants/qcedev.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/qrng.service", "", d)}"
