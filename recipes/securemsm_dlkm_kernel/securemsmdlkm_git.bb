@@ -121,7 +121,7 @@ do_strip_and_sign_modules() {
 
 
     # Since 5.10+ kernel with Techpack enabled SPs, module signing is no longer mandated, skipping.
-    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x pineapple sdmsteppe alor vienna', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x pineapple sdmsteppe alor vienna qrbx210', 'false', 'true', d)}; then
         LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
         ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
 
