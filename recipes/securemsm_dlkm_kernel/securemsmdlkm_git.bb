@@ -164,23 +164,24 @@ python () {
 }
 
 do_install() {
-    install -d ${D}${sysconfdir}/initscripts
     install -d ${D}${systemd_unitdir}/system/multi-user.target.wants/
     install -d ${D}/usr/include/
     install -d ${D}/usr/lib/modules/
-    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
 
     cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko ${D}${libdir}/modules/smcinvoke.ko
     chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
     # /etc folder execute file/permission is disallow hence start_smcinvoke_le is move to /usr/sbin
-    if ${@bb.utils.contains('BASEMACHINE', 'vienna', 'true', 'false', d)}; then
+    if ${@bb.utils.contains_any('BASEMACHINE', 'vienna alor', 'true', 'false', d)}; then
         install -d ${D}${sbindir}/initscripts
         install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sbindir}/initscripts
         sed -i 's|^ExecStart=/etc|ExecStart=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
         sed -i 's|^ExecStop=/etc|ExecStop=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
         sed -i 's|^SourcePath=/etc|SourcePath=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+    else
+        install -d ${D}${sysconfdir}/initscripts
+        install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
     fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
@@ -237,7 +238,7 @@ do_install() {
 }
 
 FILES:${PN} += "${sysconfdir}/*"
-FILES:${PN} += "/etc/initscripts/start_smcinvoke_le"
+FILES:${PN} += "${sbindir}/*"
 FILES:${PN} += "${systemd_unitdir}/system/smcinvoke.service"
 FILES:${PN} += "${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/qcedev.service", "", d)}"
