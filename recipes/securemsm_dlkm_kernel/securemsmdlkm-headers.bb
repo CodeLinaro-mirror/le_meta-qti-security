@@ -22,6 +22,7 @@ do_install() {
     cp -r ${S}/include/linux/*.h ${LNX_INC_DIR}
     cp -r ${S}/include/uapi/linux/qseecom.h ${LNX_INC_DIR}
     cp -r ${S}/include/uapi/linux/qseecom_api.h ${LNX_INC_DIR}
+    cp -r ${S}/include/uapi/linux/qcedev.h ${LNX_INC_DIR}
     cp -r ${S}/smmu-proxy/include/uapi/linux/qti-smmu-proxy.h ${LNX_INC_DIR}
 
     # include/linux/misc
