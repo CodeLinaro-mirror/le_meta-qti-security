@@ -63,13 +63,14 @@
 export MODULE_BASE=/usr/lib/modules/
 set -e
 
+MODULE_NAME="smcinvoke"
+
 case "$1" in
     start)
 	echo -n "Starting/Loading smcinvoke module: "
 
 	echo "smcinvoke:start/load" > /dev/kmsg
-	insmod $MODULE_BASE/smcinvoke.ko
-
+	modprobe "$MODULE_NAME"
 	echo "done loading smcinvoke_kernel module"
 	;;
     stop)

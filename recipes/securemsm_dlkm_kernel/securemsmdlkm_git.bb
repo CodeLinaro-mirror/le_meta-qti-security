@@ -5,6 +5,8 @@ ${LICENSE};md5=966c02a95037a9c7ad75a7597aea9c5f"
 
 inherit linux-kernel-base
 
+KERNEL_VERSION = "${@get_kernelversion_file('${STAGING_KERNEL_BUILDDIR}')}"
+
 PR = "r0"
 
 DEPENDS = "rsync-native"
@@ -214,8 +216,8 @@ do_install() {
     install -d ${D}/usr/include/
     install -d ${D}/usr/lib/modules/
 
-    cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko ${D}${libdir}/modules/smcinvoke.ko
-    chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
+    install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/
+    install -m 0644 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
     # /etc folder execute file/permission is disallow hence start_smcinvoke_le is move to /usr/sbin
@@ -295,5 +297,6 @@ FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${sy
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/tz_log.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/multi-user.target.wants/tz_log.service", "", d)}"
 FILES:${PN} += "${libdir}/modules/*"
+FILES:${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/smcinvoke.ko"
 
 RM_WORK_EXCLUDE += "${PN}"
