@@ -68,7 +68,7 @@ case "$1" in
 	echo -n "Starting/Loading smcinvoke module: "
 
 	echo "smcinvoke:start/load" > /dev/kmsg
-	modprobe $MODULE_BASE/smcinvoke.ko
+	insmod $MODULE_BASE/smcinvoke.ko
 
 	echo "done loading smcinvoke_kernel module"
 	;;
