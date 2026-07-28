@@ -34,7 +34,7 @@ STRIP_VERSION_MACHINE_FEATURES = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-
 SIGN_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/scripts', d)}"
 CERT_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/certs', d)}"
 GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
-STRIP_VERSION = "${@bb.utils.contains_any('BASEMACHINE', 'sa510m sdmsteppe alor vienna', '13.3.0', '${STRIP_VERSION_MACHINE_FEATURES}', d)}"
+STRIP_VERSION = "${GCCVER_AVAILABLE}"
 LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH_MUSLC}", "${LD_PATH_GLIBC}", d)}"
 
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
