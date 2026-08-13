@@ -212,7 +212,6 @@ python () {
 do_install() {
     install -d ${D}${systemd_unitdir}/system/multi-user.target.wants/
     install -d ${D}/usr/include/
-    install -d ${D}/usr/lib/modules/
 
     cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko ${D}${libdir}/modules/smcinvoke.ko
     chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
