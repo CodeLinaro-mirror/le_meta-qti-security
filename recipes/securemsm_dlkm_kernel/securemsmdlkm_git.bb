@@ -34,7 +34,7 @@ STRIP_VERSION_MACHINE_FEATURES = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-
 SIGN_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/scripts', d)}"
 CERT_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/certs', d)}"
 GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
-STRIP_VERSION = "${@bb.utils.contains_any('BASEMACHINE', 'sa510m sdmsteppe alor vienna', '13.3.0', '${STRIP_VERSION_MACHINE_FEATURES}', d)}"
+STRIP_VERSION = "${GCCVER_AVAILABLE}"
 LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH_MUSLC}", "${LD_PATH_GLIBC}", d)}"
 
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
@@ -53,7 +53,7 @@ do_compile() {
     ROOTDIR=${WORKSPACE}/ \
     ENABLE_DDK_BUILD=${DDK_BUILD} \
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
-    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
+    VARIANT=${KERNEL_VARIANT} \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
     KERNEL_KIT=${KERNEL_OUT_PATH}/ \
     OUT_DIR=${KERNEL_OUT_PATH}/ \
@@ -121,7 +121,7 @@ do_strip_and_sign_modules() {
 
 
     # Since 5.10+ kernel with Techpack enabled SPs, module signing is no longer mandated, skipping.
-    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x pineapple sdmsteppe alor vienna', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x pineapple sdmsteppe alor vienna qrbx210', 'false', 'true', d)}; then
         LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
         ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
 
