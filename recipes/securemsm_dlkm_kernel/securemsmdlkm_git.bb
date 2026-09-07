@@ -21,6 +21,7 @@ SRC_URI    +=  "file://qrng.service"
 SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://smmu_proxy.service"
 SRC_URI    +=  "file://qseecom.service"
+SRC_URI    +=  "file://hdcp.service"
 
 S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
 
@@ -34,9 +35,8 @@ STRIP_VERSION_MACHINE_FEATURES = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-
 SIGN_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/scripts', d)}"
 CERT_PATH = "${@bb.utils.contains('MACHINE_FEATURES', 'qti-vm-target', 'dist', '../msm-kernel/certs', d)}"
 GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
-STRIP_VERSION = "${@bb.utils.contains_any('BASEMACHINE', 'sa510m sdmsteppe alor vienna', '13.3.0', '${STRIP_VERSION_MACHINE_FEATURES}', d)}"
+STRIP_VERSION = "${GCCVER_AVAILABLE}"
 LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH_MUSLC}", "${LD_PATH_GLIBC}", d)}"
-
 
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
 do_compile[network] = "1"
@@ -54,7 +54,7 @@ do_compile() {
     ROOTDIR=${WORKSPACE}/ \
     ENABLE_DDK_BUILD=${DDK_BUILD} \
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
-    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
+    VARIANT=${KERNEL_VARIANT} \
     MODULE_OUT=${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out \
     KERNEL_KIT=${KERNEL_OUT_PATH}/ \
     OUT_DIR=${KERNEL_OUT_PATH}/ \
@@ -120,11 +120,16 @@ do_strip_and_sign_modules() {
         --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smmu_proxy_dlkm.ko
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/hdcp_qseecom_dlkm.ko -D ${WORKDIR}/hdcp_qseecom.ko
+        ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/${STRIP_VERSION}/strip \
+            --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/hdcp_qseecom_dlkm.ko
+    fi
 
     # Since 5.10+ kernel with Techpack enabled SPs, module signing is no longer mandated, skipping.
-    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x pineapple sdmsteppe alor vienna', 'false', 'true', d)}; then
+    if ${@bb.utils.contains_any('BASEMACHINE', 'qrb5165 kalama qcs40x pineapple sdmsteppe alor vienna qrbx210', 'false', 'true', d)}; then
         LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
-        ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
+            ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko
 
         if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         LD_LIBRARY_PATH=${LD_PATH} ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
@@ -165,15 +170,25 @@ python () {
 }
 
 do_install() {
-    install -d ${D}${sysconfdir}/initscripts
     install -d ${D}${systemd_unitdir}/system/multi-user.target.wants/
     install -d ${D}/usr/include/
     install -d ${D}/usr/lib/modules/
-    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
 
     cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko ${D}${libdir}/modules/smcinvoke.ko
     chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
+
+    # /etc folder execute file/permission is disallow hence start_smcinvoke_le is move to /usr/sbin
+    if ${@bb.utils.contains_any('BASEMACHINE', 'vienna alor', 'true', 'false', d)}; then
+        install -d ${D}${sbindir}/initscripts
+        install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sbindir}/initscripts
+        sed -i 's|^ExecStart=/etc|ExecStart=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+        sed -i 's|^ExecStop=/etc|ExecStop=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+        sed -i 's|^SourcePath=/etc|SourcePath=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+    else
+        install -d ${D}${sysconfdir}/initscripts
+        install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
+    fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${D}${libdir}/modules/${KERNEL_VERSION}/qseecom.ko
@@ -207,6 +222,16 @@ do_install() {
         install -m 0644 ${WORKDIR}/smmu_proxy.service -D ${D}${systemd_unitdir}/system/smmu_proxy.service
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', 'true', 'false', d)}; then
+        cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/hdcp_qseecom_dlkm.ko ${D}${libdir}/modules/hdcp_qseecom.ko
+        chown 0:0 ${D}${libdir}/modules/hdcp_qseecom.ko
+        install -m 0644 ${WORKDIR}/hdcp.service -D ${D}${systemd_unitdir}/system/hdcp.service
+        install -d ${D}${sysconfdir}/modules-load.d/
+        echo "hdcp_qseecom" > 01-hdcp.conf
+        install -m 0644 01-hdcp.conf ${D}${sysconfdir}/modules-load.d/01-hdcp.conf
+        ln -sf ${systemd_unitdir}/system/hdcp.service ${D}${systemd_unitdir}/system/multi-user.target.wants/hdcp.service
+    fi
+
     cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/linux/ ${D}/usr/include/linux/
     cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/uapi/linux/qseecom.h ${D}/usr/include/linux/
     cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/include/uapi/linux/qseecom_api.h ${D}/usr/include/linux/
@@ -226,10 +251,14 @@ do_install() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/smmu_proxy.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service
     fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', 'true', 'false', d)}; then
+        ln -sf ${systemd_unitdir}/system/hdcp.service ${D}${systemd_unitdir}/system/multi-user.target.wants/hdcp.service
+    fi
 }
 
 FILES:${PN} += "${sysconfdir}/*"
-FILES:${PN} += "/etc/initscripts/start_smcinvoke_le"
+FILES:${PN} += "${sbindir}/*"
 FILES:${PN} += "${systemd_unitdir}/system/smcinvoke.service"
 FILES:${PN} += "${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-crypto', "${systemd_unitdir}/system/qcedev.service", "", d)}"
@@ -240,6 +269,10 @@ FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${sy
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/tz_log.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/multi-user.target.wants/tz_log.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', "${systemd_unitdir}/system/hdcp.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', "${systemd_unitdir}/system/multi-user.target.wants/hdcp.service", "", d)}"
 FILES:${PN} += "${libdir}/modules/*"
+
+RPROVIDES:${PN} += "kernel-module-hdcp-qseecom-${KERNEL_VERSION}"
 
 RM_WORK_EXCLUDE += "${PN}"
