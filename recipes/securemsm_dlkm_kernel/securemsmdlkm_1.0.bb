@@ -22,7 +22,7 @@ SRC_URI    +=  "file://qrng.service"
 SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://qseecom.service"
 
-S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
+S = "${UNPACKDIR}/vendor/qcom/opensource/securemsm-kernel"
 GCCVER_AVAILABLE := "${@''.join(filter(lambda x: x != '%', '${GCCVERSION}'))}.0"
 
 EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"

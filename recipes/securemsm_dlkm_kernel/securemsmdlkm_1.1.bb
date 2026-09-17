@@ -23,7 +23,7 @@ SRC_URI    +=  "file://qrng.service"
 SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://qseecom.service"
 
-S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
+S = "${UNPACKDIR}/vendor/qcom/opensource/securemsm-kernel"
 
 EXT_MODULES = "${@os.path.relpath("${S}","${KERNEL_PLATFORM_PATH}")}"
 EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"

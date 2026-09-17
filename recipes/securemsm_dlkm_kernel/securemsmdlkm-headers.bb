@@ -1,4 +1,4 @@
-LICENSE = "GPL-2.0-only WITH Linux-syscall-note"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta-qti-security/recipes/securemsm_dlkm_kernel/\
 licenses/COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
@@ -9,7 +9,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = " \
     file://vendor/qcom/opensource/securemsm-kernel/ \
 "
-S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/"
+S = "${UNPACKDIR}/vendor/qcom/opensource/securemsm-kernel/"
 
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
