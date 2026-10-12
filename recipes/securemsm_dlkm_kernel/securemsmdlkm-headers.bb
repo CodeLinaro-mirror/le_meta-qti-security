@@ -24,6 +24,12 @@ do_install() {
             cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/linux/${i} ${D}/usr/include/linux/${i}
         fi
     done
+
+    for i in $(find ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke/ -name "*.h" -printf "%P\n"); do
+        if ! ${STAGING_KERNEL_DIR}/scripts/headers_install.sh ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke/${i} ${D}/usr/include/linux/${i}; then
+            cp -r ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke/${i} ${D}/usr/include/linux/${i}
+        fi
+    done
 }
 
 PACKAGES = "${PN}"
