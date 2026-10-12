@@ -46,7 +46,7 @@ LD_PATH = "${@oe.utils.conditional('KERNEL_TOOLS_USES_MUSLC', 'True', "${LD_PATH
 do_compile[lockfiles] = "${TMPDIR}/build_modules.lock"
 
 do_configure() {
-    cp -f ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile ${WORKSPACE}/vendor/qcom/opensource/securemsm-kernel/Makefile.am
+    cp -f ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/Makefile ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/Makefile.am
 }
 
 do_compile() {
@@ -210,15 +210,25 @@ python () {
 }
 
 do_install() {
-    install -d ${D}${sysconfdir}/initscripts
     install -d ${D}${systemd_unitdir}/system/multi-user.target.wants/
     install -d ${D}/usr/include/
     install -d ${D}/usr/lib/modules/
-    install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
 
     cp -rp ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/smcinvoke_dlkm.ko ${D}${libdir}/modules/smcinvoke.ko
     chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
+
+    # /etc folder execute file/permission is disallow hence start_smcinvoke_le is move to /usr/sbin
+    if ${@bb.utils.contains('BASEMACHINE', 'kera', 'true', 'false', d)}; then
+        install -d ${D}${sbindir}/initscripts
+        install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sbindir}/initscripts
+        sed -i 's|^ExecStart=/etc|ExecStart=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+        sed -i 's|^ExecStop=/etc|ExecStop=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+        sed -i 's|^SourcePath=/etc|SourcePath=/usr/sbin|' ${D}${systemd_unitdir}/system/smcinvoke.service
+    else
+        install -d ${D}${sysconfdir}/initscripts
+        install -m 0755 ${WORKDIR}/start_smcinvoke_le ${D}${sysconfdir}/initscripts
+    fi
 
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-qseecom', 'true', 'false', d)}; then
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel-out/qseecom_dlkm.ko -D ${D}${libdir}/modules/qseecom.ko
