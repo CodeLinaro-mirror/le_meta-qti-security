@@ -173,8 +173,9 @@ do_install() {
     install -d ${D}/usr/include/
     install -d ${D}/usr/lib/modules/
 
-    cp -rp ${S}/smcinvoke_dlkm.ko ${D}${libdir}/modules/smcinvoke.ko
-    chown 0:0 ${D}${libdir}/modules/smcinvoke.ko
+    install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/
+    install -m 0644 ${S}/smcinvoke_dlkm.ko \
+        ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/smcinvoke.ko
     install -m 0644 ${WORKDIR}/smcinvoke.service -D ${D}${systemd_unitdir}/system/smcinvoke.service
 
     # /etc folder execute file/permission is disallow hence start_smcinvoke_le is move to /usr/sbin
@@ -288,3 +289,4 @@ FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${sy
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/tz_log.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/multi-user.target.wants/tz_log.service", "", d)}"
+INSANE_SKIP:${PN} += "installed-vs-shipped"
