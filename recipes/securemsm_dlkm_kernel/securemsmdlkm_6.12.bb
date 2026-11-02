@@ -26,6 +26,8 @@ SRC_URI    +=  "file://qrng.service"
 SRC_URI    +=  "file://tz_log.service"
 SRC_URI    +=  "file://smmu_proxy.service"
 SRC_URI    +=  "file://qseecom.service"
+SRC_URI    +=  "file://hdcp.service"
+SRC_URI    +=  "file://hibernate_tzdata_mgr.service"
 
 S = "${WORKDIR}/vendor/qcom/opensource/securemsm-kernel"
 
@@ -38,6 +40,7 @@ EXTRA_OEMAKE += "SOCINCLUDE=-I${KERNEL_PLATFORM_PATH}/${KERNEL_SRC_TYPE}/include
 EXTRA_OEMAKE += "SOCINCLUDE+=-I${KERNEL_PLATFORM_PATH}/${KERNEL_SRC_TYPE}/include/uapi"
 
 EXTRA_OEMAKE += "KBUILD_MODPOST_WARN=1 KBUILD_EXTMOD=${S}"
+EXTRA_OEMAKE += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-test', 'ENABLE_HDCP_TEST=true', '', d)}"
 MAKE_TARGETS = "modules"
 
 # Disable parallel make
@@ -79,6 +82,10 @@ do_install() {
         install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smmu_proxy_dlkm.ko -D ${WORKDIR}/smmu_proxy.ko
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/hibernate_tzdata_mgr_dlkm.ko -D ${WORKDIR}/hibernate_tzdata_mgr.ko
+    fi
+
     # strip debug symbols and sign the module
     ${STRIP} \
     --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko
@@ -105,6 +112,16 @@ do_install() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', 'true', 'false', d)}; then
         ${STRIP} \
         --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smmu_proxy_dlkm.ko
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', 'true', 'false', d)}; then
+        ${STRIP} \
+        --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/hibernate_tzdata_mgr_dlkm.ko
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', 'true', 'false', d)}; then
+        ${STRIP} \
+        --strip-debug ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/hdcp_qseecom_dlkm.ko
     fi
 
     # Since 5.10+ kernel with Techpack enabled SPs, module signing is no longer mandated, skipping.
@@ -143,6 +160,12 @@ do_install() {
             ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
             ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smmu_proxy_dlkm.ko
         fi
+
+        if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', 'true', 'false', d)}; then
+            LD_LIBRARY_PATH=${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform/prebuilts/kernel-build-tools/linux-x86/lib64/ \
+            ${KERNEL_PREBUILT_PATH}/${SIGN_PATH}/sign-file sha1 ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.pem \
+            ${KERNEL_PREBUILT_PATH}/${CERT_PATH}/signing_key.x509 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/hibernate_tzdata_mgr_dlkm.ko
+        fi
     fi
 
     install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko -D ${D}${libdir}/modules/smcinvoke.ko
@@ -171,9 +194,25 @@ do_install() {
         install -m 0644 ${WORKDIR}/smmu_proxy.service -D ${D}${systemd_unitdir}/system/smmu_proxy.service
     fi
 
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/hibernate_tzdata_mgr_dlkm.ko -D ${D}${libdir}/modules/hibernate_tzdata_mgr.ko
+        install -m 0644 ${WORKDIR}/hibernate_tzdata_mgr.service -D ${D}${systemd_unitdir}/system/hibernate_tzdata_mgr.service
+    fi
 
- # Install UAPI headers to ${includedir}/linux so dependent userspace builds can find linux/* headers
-     cp -r ${S}/include/uapi/linux/* ${D}${includedir}/linux/
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/hdcp_qseecom_dlkm.ko -D ${D}${libdir}/modules/hdcp_qseecom.ko
+        install -m 0644 ${WORKDIR}/hdcp.service -D ${D}${systemd_unitdir}/system/hdcp.service
+        install -d ${D}${sysconfdir}/modules-load.d/
+        echo "hdcp_qseecom" > 01-hdcp.conf
+        install -m 0644 01-hdcp.conf ${D}${sysconfdir}/modules-load.d/01-hdcp.conf
+        ln -sf ${systemd_unitdir}/system/hdcp.service ${D}${systemd_unitdir}/system/multi-user.target.wants/hdcp.service
+    fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-test', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/vendor/qcom/opensource/securemsm-kernel/hdcp2p2_test.ko -D ${D}${libdir}/modules/hdcp2p2_test.ko
+    fi
+    # Install UAPI headers to ${includedir}/linux so dependent userspace builds can find linux/* headers
+    cp -r ${S}/include/uapi/linux/* ${D}${includedir}/linux/
 
     ln -sf ${systemd_unitdir}/system/smcinvoke.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smcinvoke.service
 
@@ -193,6 +232,10 @@ do_install() {
     if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', 'true', 'false', d)}; then
         ln -sf ${systemd_unitdir}/system/smmu_proxy.service ${D}${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service
     fi
+
+    if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', 'true', 'false', d)}; then
+        ln -sf ${systemd_unitdir}/system/hibernate_tzdata_mgr.service ${D}${systemd_unitdir}/system/multi-user.target.wants/hibernate_tzdata_mgr.service
+    fi
 }
 
 FILES:${PN} += "${sysconfdir}/*"
@@ -209,6 +252,11 @@ FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${sy
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-smmu-proxy', "${systemd_unitdir}/system/multi-user.target.wants/smmu_proxy.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/tz_log.service", "", d)}"
 FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-tzlog', "${systemd_unitdir}/system/multi-user.target.wants/tz_log.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', "${systemd_unitdir}/system/hdcp.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp', "${systemd_unitdir}/system/multi-user.target.wants/hdcp.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', "${systemd_unitdir}/system/hibernate_tzdata_mgr.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', "${systemd_unitdir}/system/multi-user.target.wants/hibernate_tzdata_mgr.service", "", d)}"
+FILES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-test', "${libdir}/modules/hdcp2p2_test.ko", "", d)}"
 FILES:${PN} += "${libdir}/modules/*"
 FILES:${PN} += "${base_libdir}/modules/*"
 SYSROOT_DIRS:append = " ${includedir}"
@@ -221,4 +269,8 @@ RPROVIDES:${PN} += "kernel-module-smcinvoke-${KERNEL_VERSION}"
 RPROVIDES:${PN} += "kernel-module-qseecom-${KERNEL_VERSION}"
 RPROVIDES:${PN} += "kernel-module-smmu-proxy-${KERNEL_VERSION}"
 RPROVIDES:${PN} += "kernel-module-tz-log-${KERNEL_VERSION}"
-
+RPROVIDES:${PN} += "kernel-module-hdcp-qseecom-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hibernate-tzdata', \
+    'kernel-module-hibernate-tzdata-mgr-${KERNEL_VERSION}', '', d)}"
+RPROVIDES:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'qti-hdcp-test', \
+    'kernel-module-hdcp2p2-test-${KERNEL_VERSION}', '', d)}"
