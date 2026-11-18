@@ -1,0 +1,13 @@
+[Unit]
+Description=Load hdcp_qseecom dlkm
+After=smcinvoke.service
+Requires=smcinvoke.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/sbin/insmod /usr/lib/modules/hdcp_qseecom.ko
+ExecStop=/sbin/rmmod hdcp_qseecom
+
+[Install]
+WantedBy=multi-user.target
